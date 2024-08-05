@@ -1,37 +1,11 @@
 import os
 import sqlite3
 
-
-'''
-password stuff:
-    encryption_key_pbkdf_salt = generate_salt()
-    encryption_key_aes_iv = generate_iv()
-    encryption_key = aes256(
-        encryption_key_aes_iv,
-        pbkdf2(encryption_key_pbkdf_salt, password),
-        generate_encryption_key()
-    )`
-
-
-recovery code stuff:
-    recovery_code = generate_recovery_code()
-    recovery_code_salt = generate_salt()
-    recovery_code_hash = bcrypt(recovery_code_salt, recovery_code)
-    encryption_key_pbkdf_salt = generate_salt()
-    encryption_key_aes_iv = generate_iv()
-    encryption_key = aes256(
-        encryption_key_aes_iv,
-        pbkdf2(encryption_key_pbkdf_salt, recovery_code),
-        encryption_key_clear
-    )
-
-'''
-
 def create_users_table(conn):
     cur = conn.cursor()
     cur.execute(''' 
             CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
+                user_id TEXT PRIMARY KEY,
                 username_sha256 BLOB NOT NULL UNIQUE,
                 password_salt BLOB NOT NULL,
                 password_bcrypt BLOB NOT NULL,
@@ -42,7 +16,6 @@ def create_users_table(conn):
                 ''')
     conn.commit()
 
-
 def create_data_entity_table(conn):
     c = conn.cursor()
     c.execute('''
@@ -52,7 +25,7 @@ def create_data_entity_table(conn):
             website TEXT NOT NULL,
             value_iv BLOB NOT NULL,
             value_aes256cbc BLOB NOT NULL,
-            FOREIGN KEY(user_id) REFERENCES users(id)
+            FOREIGN KEY(user_id) REFERENCES users(user_id)
         )
     ''')
     conn.commit()
@@ -64,30 +37,27 @@ def initialize_database(db_name: str):
         create_data_entity_table(conn)
         conn.close()
 
-
 def add_user(db_name: str, user_id: str, username_sha256: bytes, password_salt: bytes, password_bcrypt: bytes, pbkdf2_key_salt: bytes, user_key_iv: bytes, user_key_aes256cbc: bytes):
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
     c.execute('''
-        INSERT INTO users (id, username_sha256, password_salt, password_bcrypt, pbkdf2_key_salt, user_key_iv, user_key_aes256cbc) 
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (username_sha256, password_salt, password_bcrypt, pbkdf2_key_salt, user_key_iv, user_key_aes256cbc))
-    user_id = c.lastrowid
+        INSERT INTO users (user_id, username_sha256, password_salt, password_bcrypt, pbkdf2_key_salt, user_key_iv, user_key_aes256cbc) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (user_id, username_sha256, password_salt, password_bcrypt, pbkdf2_key_salt, user_key_iv, user_key_aes256cbc))
     conn.commit()
     conn.close()
-    return user_id
 
 def add_data_entity(db_name: str, user_id: str, website: str, value_iv: bytes, value_aes256cbc: bytes):
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
     c.execute('''
         INSERT INTO DataEntity (user_id, website, value_iv, value_aes256cbc) 
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?)
     ''', (user_id, website, value_iv, value_aes256cbc))
     conn.commit()
     conn.close()
 
-def retrieve_data_entity(db_name: str, user_id: str):
+def retrieve_data_entities(db_name: str, user_id: str):
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
     c.execute('''
@@ -107,4 +77,10 @@ def delete_data_entity(db_name: str, entity_id: int):
     conn.commit()
     conn.close()
 
-
+def retrieve_user(db_name: str, username_sha256: bytes):
+    conn = sqlite3.connect(db_name)
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE username_sha256 = ?', (username_sha256,))
+    user = c.fetchone()
+    conn.close()
+    return user

@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import hashlib
 import bcrypt
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -14,12 +13,12 @@ def generate_salt() -> bytes:
 def generate_iv() -> bytes:
     return os.urandom(16)
 
-def generate_aes_key() ->bytes:
+def generate_aes_key() -> bytes:
     return os.urandom(32)
 
 def pbkdf2(salt: bytes, password: str, iterations: int = 1000) -> bytes:
     kdf = PBKDF2HMAC(
-        algorithm= hashes.SHA256(),
+        algorithm=hashes.SHA256(),
         length=32,
         salt=salt,
         iterations=iterations
@@ -43,11 +42,9 @@ def aes256_decrypt(iv: bytes, key: bytes, encrypted_data: bytes) -> bytes:
     return data
 
 def gen_hash(username: str):
-    return sha256((username.encode('utf-8')).hexdigest())
+    return sha256(username.encode('utf-8')).digest()
 
 def generate_bcrypt(password: str):
-    bytes_p = password.encode('utf-8')
-    password_salt = generate_salt()
-    password_bcrypt = bcrypt.hashpw(bytes_p, password_salt)
-
-    return password_bcrypt
+    password_salt = bcrypt.gensalt()
+    password_bcrypt = bcrypt.hashpw(password.encode('utf-8'), password_salt)
+    return password_bcrypt, password_salt
