@@ -13,3 +13,5 @@ __pycache__/
 # Ignore virtual environment directories
 venv/
 env/
+
+.DS_Store
