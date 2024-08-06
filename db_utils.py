@@ -83,4 +83,5 @@ def retrieve_user(db_name: str, username_sha256: bytes):
     c.execute('SELECT * FROM users WHERE username_sha256 = ?', (username_sha256,))
     user = c.fetchone()
     conn.close()
+    print(f"Retrieved user: {user}")  # Debug statement
     return user

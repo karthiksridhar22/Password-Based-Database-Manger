@@ -16,7 +16,6 @@ def login_user(db_name: str, username: str, password: str):
     user = retrieve_user(db_name, username_sha256)
     print("Retrieved user:", user)  # Debug statement to print user tuple
     if user:
-        stored_password_salt = user[2]
         stored_password_bcrypt = user[3]
         if bcrypt.checkpw(password.encode('utf-8'), stored_password_bcrypt):
             print(f"User {username} logged in successfully.")
@@ -33,9 +32,10 @@ def add_website_password(db_name: str, user: tuple, password: str):
     website_password = input("\n Enter the website password \n")
     value_iv = generate_iv()
     
+    print("User tuple:", user)  # Debug statement
     # Decrypt the intermediate key
-    user_key_iv = user[6]
-    encrypted_aes_key = user[7]
+    user_key_iv = user[5]
+    encrypted_aes_key = user[6]
     password_based_key = pbkdf2(user[4], password)
     intermediate_key = aes256_decrypt(user_key_iv, password_based_key, encrypted_aes_key)
     
@@ -72,8 +72,8 @@ def retrieve_website_password(db_name: str, user: tuple, password: str):
     encrypted_password = selected_entity[4]
     
     # Decrypt the intermediate key
-    user_key_iv = user[6]
-    encrypted_aes_key = user[7]
+    user_key_iv = user[5]
+    encrypted_aes_key = user[6]
     password_based_key = pbkdf2(user[4], password)
     intermediate_key = aes256_decrypt(user_key_iv, password_based_key, encrypted_aes_key)
     
