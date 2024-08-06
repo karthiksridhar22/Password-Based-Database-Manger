@@ -3,3 +3,12 @@ __pycache__/
 
 # Ignore the database file
 *.db
+
+# Ignore other temporary files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment directories
+venv/
+env/
